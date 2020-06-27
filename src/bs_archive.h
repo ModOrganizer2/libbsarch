@@ -81,8 +81,6 @@ public:
     template<typename context_type>
     void set_dds_callback(bsa_file_dds_info_proc_t dds_function, const context_type &context)
     {
-        debug_log() << "Setting DDS callback for archive: " << archive_ << "\nCallback adress: " << &dds_function;
-
         auto heap_context = new context_type(context);
         callback_contexts_.emplace_back(heap_context);
         bsa_file_dds_info_callback_set(archive_, dds_function, callback_contexts_.back());

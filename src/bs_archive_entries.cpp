@@ -25,7 +25,6 @@ bs_archive_entries::~bs_archive_entries()
 
 void bs_archive_entries::add(const convertible_string &filepath)
 {
-    debug_log() << "Adding to entries: " << filepath;
     const auto &result = bsa_entry_list_add(_entries, filepath);
     libbsarch::checkResult(result);
 }
