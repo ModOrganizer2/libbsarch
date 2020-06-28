@@ -88,14 +88,6 @@ if(copy_dll_to_binary_dir)
     message("libbsarch: Copying the DLL to ${CMAKE_BINARY_DIR}/libbsarch.dll")
 endif()
 
-#Adding Qt support
-if(Qt5_FOUND)
-    message("libbsarch: Qt5 found, enabling Qt support")
-    target_link_libraries(libbsarch_OOP PUBLIC Qt5::Core)
-    target_compile_definitions(libbsarch PUBLIC "QT")
-    target_compile_definitions(libbsarch_OOP PUBLIC "QT")
-endif()
-
 target_link_libraries(libbsarch_OOP PUBLIC libbsarch)
 target_compile_features(libbsarch_OOP PRIVATE cxx_std_17)
 target_compile_definitions(libbsarch_OOP PRIVATE _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
