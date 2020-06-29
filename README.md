@@ -11,7 +11,7 @@ BSArchive Dynamic Link Library and C++ bindings
 
 With CMake: 
 Use ``add_subdirectory`` and ``target_link_library``
-Then ``#include "libbsarch.h"`` for the C wrapper, or ``#include "bs_archive_auto"`` for the C++ wrapper.
+Then ``#include "libbsarch.h"`` for the C wrapper, or ``#include "bsa.hpp"`` for the C++ wrapper.
 See the example for code use.
 
 Without CMake:
