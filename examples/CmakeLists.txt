@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.17)
+
+project("libbsarch-examples")
+
+include(CTest)
+enable_testing()
+
+add_subdirectory(../c99 .)
+
+add_executable("${PROJECT_NAME}-read-write" libbsarch-read-write.cpp)
+
+set_target_properties("${PROJECT_NAME}-read-write" PROPERTIES OUTPUT_NAME "libbsarch-read-write")
+
+target_link_libraries("${PROJECT_NAME}-read-write" PRIVATE "libbsarch-c99")
+
+add_dependencies(${PROJECT_NAME} "${PROJECT_NAME}-read-write")
+
+set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
+set(CPACK_PROJECT_NAME ${PROJECT_NAME})
+
+include(CPack)

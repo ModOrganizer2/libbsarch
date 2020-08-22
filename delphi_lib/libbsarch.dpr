@@ -234,11 +234,11 @@ begin
   end;
 end;
 
-function bsa_file_data_free(obj: Pointer; fileDataResult: TwbBSResultMessageBuffer): TwbBSResultMessage; stdcall;
+function bsa_file_data_free(obj: Pointer; fileDataResult: TwbBSResultBuffer): TwbBSResultMessage; stdcall;
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    TwbBSArchive(obj).ReleaseFileDataCompat(fileDataResult.buffer);
+    TwbBSArchive(obj).ReleaseFileDataCompat(fileDataResult);
   except
     on E: Exception do
       exception_handler(E, Result);

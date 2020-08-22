@@ -1,15 +1,7 @@
-{*******************************************************************************
-
-     The contents of this file are subject to the Mozilla Public License
-     Version 1.1 (the "License"); you may not use this file except in
-     compliance with the License. You may obtain a copy of the License at
-     http://www.mozilla.org/MPL/
-
-     Software distributed under the License is distributed on an "AS IS"
-     basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
-     License for the specific language governing rights and limitations
-     under the License.
-
+{******************************************************************************
+  This Source Code Form is subject to the terms of the Mozilla Public License,
+  v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain
+  one at https://mozilla.org/MPL/2.0/.
 *******************************************************************************}
 
 unit wbBSArchive;
@@ -1374,6 +1366,7 @@ begin
 
   end;
 
+
   fStream := TwbWriteCachedFileStream.Create(aFilePath, fmCreate);
   fFileName := aFilePath;
   Include(fStates, stWriting);
@@ -1534,8 +1527,6 @@ begin
   Exclude(fStates, stWriting);
   Close;
 end;
-
-
 
 procedure TwbBSArchive.AddFileDisk(const aFilePath, aSourcePath: string);
 var
@@ -1909,13 +1900,13 @@ begin
         Result.size := FileTES3.Size;
         // Modified: Make sure memory is zeroed when allocated
         Result.data := AllocMem(FileTES3.Size);
+        fStream.ReadBuffer(Result.data[0], Result.size);
       end;
 
       baTES4, baFO3, baSSE: begin
         FileTES4 := aFileRecord;
         fStream.Position := FileTES4.Offset;
         size := FileTES4.Size;
-
         bCompressed := size and FILE_SIZE_COMPRESS <> 0;
         if bCompressed then
           size := size and not FILE_SIZE_COMPRESS;
@@ -1992,10 +1983,8 @@ begin
         FileFO4 := aFileRecord;
 
         TexSize := SizeOf(TDDSHeader);
-
         for i := Low(FileFO4.TexChunks) to High(FileFO4.TexChunks) do
           Inc(TexSize, FileFO4.TexChunks[i].Size);
-
         Result.size := Texsize;
 
         // Modified: Make sure memory is zeroed when allocated
