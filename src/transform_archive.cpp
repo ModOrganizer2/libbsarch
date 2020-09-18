@@ -7,7 +7,7 @@
 
 #include "transform_archive.hpp"
 #include "bsa_saver.hpp"
-#include "utils/exception_guard.hpp"
+#include "utils/scope_fail.hpp"
 
 namespace libbsarch {
 
@@ -36,10 +36,10 @@ void transform_archive(const bsa &source,
         type = source.get_type();
 
     bsa target;
-    bsa_saver_complex target_saver(target);
+    bsa_saver_complex target_saver(std::move(target));
 
     target_saver.prepare(target_path, std::move(entries), type);
-    exception_guard guard([target_path] { fs::remove(target_path); });
+    scope_fail guard([target_path] { fs::remove(target_path); });
 
     for (const auto &relative_path : files)
     {
