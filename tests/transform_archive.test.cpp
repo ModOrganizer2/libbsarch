@@ -26,7 +26,7 @@ TEST_CASE("Transform archive")
 
         //Preparing input archive
         bsa archive;
-        bsa_saver_simple saver(archive);
+        bsa_saver_simple saver(std::move(archive));
         REQUIRE_NOTHROW(saver.set_save_type(type.type));
         REQUIRE_NOTHROW(saver.set_save_path(input_archive_path));
 
@@ -35,7 +35,7 @@ TEST_CASE("Transform archive")
         REQUIRE_NOTHROW(saver.add_file(std::move(file)));
         REQUIRE_NOTHROW(saver.save());
 
-        REQUIRE_NOTHROW(archive.close());
+        REQUIRE_NOTHROW(saver.close());
 
         //Transforming it
         transform_archive(input_archive_path,

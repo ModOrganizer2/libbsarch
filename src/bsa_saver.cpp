@@ -7,14 +7,9 @@
 
 namespace libbsarch {
 
-bsa_saver_simple::bsa_saver_simple(bsa &bsa)
-    : bsa_(bsa)
+bsa_saver_simple::bsa_saver_simple(bsa &&bsa)
+    : bsa_(std::move(bsa))
 {}
-
-void bsa_saver_simple::set_bsa(bsa &bsa)
-{
-    bsa_ = bsa;
-}
 
 void bsa_saver_simple::add_file(disk_blob &&blob)
 {
@@ -55,7 +50,7 @@ void bsa_saver_simple::save(const fs::path &archive_path, bsa_archive_type_t typ
         entries.add(file.path_in_archive);
     }
 
-    auto create_result = bsa_create_archive(bsa_.get().get_unchecked().get(),
+    auto create_result = bsa_create_archive(bsa_.get_unchecked().get(),
                                             archive_path.wstring().c_str(),
                                             type,
                                             entries.get_unchecked().get());
@@ -63,14 +58,14 @@ void bsa_saver_simple::save(const fs::path &archive_path, bsa_archive_type_t typ
 
     for (const auto &file : files_)
     {
-        const auto &result = bsa_add_file_from_disk(bsa_.get().get_unchecked().get(),
+        const auto &result = bsa_add_file_from_disk(bsa_.get_unchecked().get(),
                                                     file.path_in_archive.wstring().c_str(),
                                                     file.path_on_disk.wstring().c_str());
 
         checkResult(result);
     }
 
-    const auto &result = bsa_save(bsa_.get().get_unchecked().get());
+    const auto &result = bsa_save(bsa_.get_unchecked().get());
     checkResult(result);
 }
 
@@ -79,19 +74,19 @@ void bsa_saver_simple::save() const
     save(save_path_, save_type_);
 }
 
+void bsa_saver_simple::close()
+{
+    bsa_.close();
+}
+
 const std::vector<disk_blob> &bsa_saver_simple::get_file_list() const
 {
     return files_;
 }
 
-void bsa_saver_complex::set_bsa(bsa &bsa)
-{
-    bsa_ = bsa;
-}
-
 void bsa_saver_complex::prepare(const fs::path &archive_path, bsa_entry_list entries, bsa_archive_type_t type)
 {
-    const auto &result = bsa_create_archive(bsa_.get().get_unchecked().get(),
+    const auto &result = bsa_create_archive(bsa_.get_unchecked().get(),
                                             archive_path.wstring().c_str(),
                                             type,
                                             entries.get_unchecked().get());
@@ -101,7 +96,7 @@ void bsa_saver_complex::prepare(const fs::path &archive_path, bsa_entry_list ent
 
 void bsa_saver_complex::add_file(const fs::path &path_in_archive, std::vector<std::byte> &&memory_data)
 {
-    const auto &result = bsa_add_file_from_memory(bsa_.get().get_unchecked().get(),
+    const auto &result = bsa_add_file_from_memory(bsa_.get_unchecked().get(),
                                                   path_in_archive.wstring().c_str(),
                                                   memory_data.size(),
                                                   memory_data.data());
@@ -110,8 +105,13 @@ void bsa_saver_complex::add_file(const fs::path &path_in_archive, std::vector<st
 
 void bsa_saver_complex::save() const
 {
-    const auto &result = bsa_save(bsa_.get().get_unchecked().get());
+    const auto &result = bsa_save(bsa_.get_unchecked().get());
     checkResult(result);
+}
+
+void bsa_saver_complex::close()
+{
+    bsa_.close();
 }
 
 } // namespace libbsarch

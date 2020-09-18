@@ -12,7 +12,7 @@ namespace libbsarch {
 class bsa_saver_simple
 {
 public:
-    bsa_saver_simple(bsa &bsa);
+    bsa_saver_simple(bsa &&bsa);
 
     ~bsa_saver_simple() = default;
 
@@ -21,8 +21,6 @@ public:
 
     bsa_saver_simple &operator=(const bsa_saver_simple &) = delete;
     bsa_saver_simple &operator=(bsa_saver_simple &&) = default;
-
-    void set_bsa(bsa &bsa);
 
     void add_file(disk_blob &&blob);
 
@@ -34,11 +32,12 @@ public:
 
     void save(const fs::path &archive_path, bsa_archive_type_t type) const;
     void save() const;
+    void close();
 
     const std::vector<disk_blob> &get_file_list() const;
 
 private:
-    std::reference_wrapper<bsa> bsa_;
+    bsa bsa_;
 
     std::vector<disk_blob> files_;
     fs::path save_path_;
@@ -48,8 +47,8 @@ private:
 class bsa_saver_complex
 {
 public:
-    bsa_saver_complex(bsa &bsa)
-        : bsa_(bsa)
+    bsa_saver_complex(bsa &&bsa)
+        : bsa_(std::move(bsa))
     {}
 
     bsa_saver_complex(const bsa_saver_complex &) = delete;
@@ -57,17 +56,16 @@ public:
 
     ~bsa_saver_complex() = default;
 
-    void set_bsa(bsa &bsa);
-
     void prepare(const fs::path &archive_path, bsa_entry_list entries, bsa_archive_type_t type);
 
     void add_file(const fs::path &path_in_archive, std::vector<std::byte> &&memory_data);
     void add_file(disk_blob &&blob);
 
     void save() const;
+    void close();
 
 private:
-    std::reference_wrapper<bsa> bsa_;
+    bsa bsa_;
 };
 
 namespace detail {
