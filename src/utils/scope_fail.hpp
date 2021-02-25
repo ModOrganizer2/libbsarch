@@ -8,6 +8,7 @@
 #include <functional>
 #include <utility>
 
+namespace libbsarch {
 template<typename F>
 class scope_fail
 {
@@ -30,3 +31,4 @@ public:
             f();
     }
 };
+} // namespace libbsarch

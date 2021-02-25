@@ -4,21 +4,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 #pragma once
 
-#ifdef QT
-#include <QDebug>
-#endif
 #include <codecvt>
 #include <locale>
 #include <string>
 
 namespace libbsarch {
-#ifdef QT
-std::wstring to_wstring(const QString &str);
-std::string to_string(const QString &str);
-QString to_qstring(const std::string &str);
-QString to_qstring(const std::wstring &str);
-#endif
-
 std::string to_string(const std::wstring &str);
 std::wstring to_wstring(const std::string &str);
 } // namespace libbsarch

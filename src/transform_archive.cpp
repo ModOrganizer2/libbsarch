@@ -11,17 +11,6 @@
 
 namespace libbsarch {
 
-void transform_archive(const fs::path &source_path,
-                       const fs::path &target_path,
-                       transform_callback callback,
-                       bsa_archive_type_t type)
-{
-    bsa source;
-    source.load(source_path);
-
-    transform_archive(source, target_path, callback, type);
-}
-
 void transform_archive(const bsa &source,
                        const fs::path &target_path,
                        transform_callback callback,

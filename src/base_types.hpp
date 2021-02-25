@@ -23,14 +23,13 @@ class extracted_data
 {
 public:
     explicit extracted_data(bsa_result_buffer_t buffer_, bsa_archive_t parent);
+    ~extracted_data();
 
     extracted_data(const extracted_data &) = delete;
     extracted_data(extracted_data &&) = default;
 
     extracted_data &operator=(const extracted_data &) = delete;
     extracted_data &operator=(extracted_data &&) = default;
-
-    ~extracted_data();
 
     void *get_buffer();
     uint32_t get_size() const;
@@ -47,13 +46,17 @@ inline std::vector<std::byte> to_vector(extracted_data &&data)
     return std::vector(buffer, buffer + size);
 }
 
+struct from_path_in_archive_tag
+{
+};
+
 struct disk_blob
 {
     explicit disk_blob(const fs::path &root_dir_, const fs::path &path_on_disk_);
 
     explicit disk_blob(const fs::path &path_in_archive_,
                        const fs::path &path_on_disk_,
-                       [[maybe_unused]] bool decoy_parameter);
+                       from_path_in_archive_tag);
 
     disk_blob(const disk_blob &) = delete;
     disk_blob(disk_blob &&) = default;
@@ -71,7 +74,6 @@ struct file_record
 };
 
 namespace detail {
-
 class bsa_entry_list_wrapper
 {
 public:

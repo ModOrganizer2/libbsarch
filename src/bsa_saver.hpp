@@ -8,7 +8,6 @@
 #include "bsa.hpp"
 
 namespace libbsarch {
-
 class bsa_saver_simple
 {
 public:
@@ -69,7 +68,6 @@ private:
 };
 
 namespace detail {
-
 class bsa_saver_variant
 {
 public:

@@ -41,9 +41,7 @@ disk_blob::disk_blob(const fs::path &root_dir_, const fs::path &path_on_disk_)
     , path_on_disk(path_on_disk_)
 {}
 
-disk_blob::disk_blob(const fs::path &path_in_archive_,
-                     const fs::path &path_on_disk_,
-                     [[maybe_unused]] bool decoy_parameter)
+disk_blob::disk_blob(const fs::path &path_in_archive_, const fs::path &path_on_disk_, from_path_in_archive_tag)
     : path_in_archive(path_in_archive_)
     , path_on_disk(path_on_disk_)
 {}

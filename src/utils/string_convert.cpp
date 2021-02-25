@@ -5,8 +5,8 @@
 #include "string_convert.hpp"
 
 namespace libbsarch {
-
 static std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> s_converter;
+
 std::string to_string(const std::wstring &str)
 {
     return s_converter.to_bytes(str);
@@ -14,7 +14,6 @@ std::string to_string(const std::wstring &str)
 
 std::wstring to_wstring(const std::string &str)
 {
-    auto ws = s_converter.from_bytes(str);
-    return ws;
+    return s_converter.from_bytes(str);
 }
 } // namespace libbsarch

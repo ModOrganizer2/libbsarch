@@ -110,4 +110,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
 
     target_link_libraries(libbsarch_tests PUBLIC libbsarch_OOP)
     target_compile_features(libbsarch_tests PRIVATE cxx_std_17)
+
+    target_compile_options(libbsarch_tests PRIVATE
+      $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+      $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror>
+    )
 endif()

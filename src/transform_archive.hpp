@@ -10,13 +10,7 @@
 #include <functional>
 
 namespace libbsarch {
-
 using transform_callback = std::function<std::vector<std::byte>(const fs::path &relative_path, extracted_data &&blob)>;
-
-void transform_archive(const fs::path &source_path,
-                       const fs::path &target_path,
-                       transform_callback callback,
-                       bsa_archive_type_t type = bsa_archive_type_t::baNone);
 
 void transform_archive(const bsa &source,
                        const fs::path &target_path,
