@@ -295,6 +295,7 @@ type
     procedure CreateArchiveCompat(const aFilePath: string;
       aType: TBSArchiveType; aFilesList: TwbBSEntryList = nil);
     procedure Save;
+
     procedure AddFileDisk(const aFilePath, aSourcePath: string);
     procedure AddFileDiskRoot(const aRootDir, aSourcePath: string);
     procedure AddFileDataCompat(const aFilePath: string; const aSize: Cardinal;
@@ -304,6 +305,8 @@ type
       : TwbBSResultBuffer; overload;
     function ExtractFileDataCompat(const aFilePath: string)
       : TwbBSResultBuffer; overload;
+    procedure ExtractAllFiles(const aFolderName: string;
+      aOverwriteCurrentFiles: Boolean);
     procedure ReleaseFileDataCompat(fileDataResult: TwbBSResultBuffer);
     procedure ExtractFile(const aFilePath, aSaveAs: string);
     procedure IterateFilesCompat(aProc: TBSFileIterationProcCompat;
@@ -707,6 +710,7 @@ begin
   fMaxChunkCount := 4;
   fSingleMipChunkX := 512;
   fSingleMipChunkY := 512;
+  Sync := TSimpleRWSync.Create;
 end;
 
 destructor TwbBSArchive.Destroy;
@@ -1456,7 +1460,7 @@ var
   i, j: Integer;
 begin
   if not(stWriting in fStates) then
-    raise Exception.Create('Archive is not in writing mode');
+    raise Exception.Create('Archive is not in writing mode1');
 
   case fType of
     baTES3:
@@ -1632,7 +1636,7 @@ var
   stream: TFileStream;
 begin
   if not(stWriting in fStates) then
-    raise Exception.Create('Archive is not in writing mode');
+    raise Exception.Create('Archive is not in writing mode2');
 
   stream := TFileStream.Create(aSourcePath, fmOpenRead + fmShareDenyNone);
   try
@@ -1679,7 +1683,7 @@ var
   ddsinfo: TDDSInfo;
 begin
   if not(stWriting in fStates) then
-    raise Exception.Create('Archive is not in writing mode');
+    raise Exception.Create('Archive is not in writing mode3');
 
   // FO4 dds mipmaps have their own partial hash calculation down below
   if fShareData and (fType <> baFO4dds) then
@@ -2432,6 +2436,87 @@ begin
     ReleaseFileDataCompat(fileData);
     fs.Free;
   end;
+end;
+
+type
+  TIterUnpackContext = record
+    Dir: PChar;
+    overwriteCurrentFiles: Boolean;
+  end;
+
+  PIterUnpackContext = ^TIterUnpackContext;
+
+function IterUnpackFile(aArchive: Pointer; const aFilePath: PChar;
+  aFileRecord: Pointer; aFolderRecord: Pointer; aContext: Pointer)
+  : Boolean; stdcall;
+var
+  bsa: TwbBSArchive;
+  Dir, fname: string;
+  fileData: TwbBSResultBuffer;
+  context: PIterUnpackContext;
+begin
+  Result := False;
+
+  context := PIterUnpackContext(aContext);
+
+  bsa := TwbBSArchive(aArchive);
+  // fo4 archives can contain backslashes
+  fname := StringReplace(aFilePath, '/', '\', [rfReplaceAll]);
+
+  Dir := context.Dir;
+
+  if not DirectoryExists(Dir + ExtractFilePath(fname)) then
+  begin
+    if Assigned(bsa.Sync) then
+      bsa.Sync.BeginWrite;
+    try
+      if not ForceDirectories(Dir + ExtractFilePath(fname)) then
+        if not DirectoryExists(Dir + ExtractFilePath(fname)) then
+          raise Exception.Create('Can not create destination folder: ' + Dir +
+            ExtractFilePath(fname));
+
+      if FileExists(Dir + fname) and not context.overwriteCurrentFiles then
+        Exit;
+
+      if FileExists(Dir + fname) then
+        DeleteFile(PChar(Dir + fname));
+
+    finally
+      if Assigned(bsa.Sync) then
+        bsa.Sync.EndWrite;
+    end;
+  end;
+
+  try
+    fileData := bsa.ExtractFileDataCompat(aFileRecord);
+  except
+    on e: Exception do begin
+      bsa.ReleaseFileDataCompat(fileData);
+      raise Exception.Create('Unpacking error "' + fname + '": ' + e.Message);
+    end;
+  end;
+
+  with TFileStream.Create(Dir + fname, fmCreate) do
+    try
+      Write(fileData.data[0], fileData.Size);
+    finally
+      Free;
+    end;
+
+    bsa.ReleaseFileDataCompat(fileData);
+end;
+
+procedure TwbBSArchive.ExtractAllFiles(const aFolderName: string;
+  aOverwriteCurrentFiles: Boolean);
+var
+  context: TIterUnpackContext;
+begin
+  if not DirectoryExists(aFolderName) then
+    raise Exception.Create('Folder does not exist: ' + aFolderName);
+
+  context.Dir := PChar(IncludeTrailingPathDelimiter(aFolderName));
+  context.overwriteCurrentFiles := aOverwriteCurrentFiles;
+  IterateFilesCompat(@IterUnpackFile, @context);
 end;
 
 // Modified: Version for use in non-Borland C/C++

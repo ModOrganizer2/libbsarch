@@ -116,14 +116,8 @@ void bsa::extract_to_disk(const fs::path &relative_path,
 
 void bsa::extract_all_to_disk(const fs::path &directory, bool overwrite_current_files) const
 {
-    for (const auto &relative_path : list_files())
-    {
-        fs::path absolute_path = directory / relative_path;
-        fs::path absolute_directory = fs::path(absolute_path).remove_filename();
-
-        fs::create_directories(absolute_directory);
-        extract_to_disk(relative_path, absolute_path, overwrite_current_files);
-    }
+    auto dir = directory.wstring();
+    bsa_extract_all_files(archive_.get(), dir.c_str(), overwrite_current_files);
 }
 
 file_record bsa::find_file_record(const fs::path &filename)

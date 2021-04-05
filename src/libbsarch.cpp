@@ -47,6 +47,12 @@ BSARCH_DLL_API(bsa_result_message_t) bsa_add_file_from_disk(bsa_archive_t archiv
   return { 0 };
 }
 
+BSARCH_DLL_API(bsa_result_message_t)
+bsa_extract_all_files(bsa_archive_t archive, const wchar_t *root_dir, bool overwrite_current_files)
+{
+    return {1};
+}
+
 BSARCH_DLL_API(bsa_result_message_t) bsa_add_file_from_disk_root(bsa_archive_t archive, const wchar_t* root_dir, const wchar_t* source_path) {
   return { 0 };
 }
@@ -153,5 +159,5 @@ BSARCH_DLL_API(void) bsa_share_data_set(bsa_archive_t archive, bool flags) {
 BSARCH_DLL_API(void) bsa_file_dds_info_callback_set(bsa_archive_t archive, bsa_file_dds_info_proc_t file_dds_info_proc, void *context) {
   return;
 }
-}
+} // namespace libbsarch
 #endif

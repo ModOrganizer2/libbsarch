@@ -192,6 +192,18 @@ begin
   end;
 end;
 
+function bsa_extract_all_files(obj: Pointer; const aRootDir: PChar; aOverwriteCurrentFiles: Boolean): TwbBSResultMessage; stdcall;
+begin
+  Result.code := Ord(BSA_RESULT_NONE);
+  try
+    TwbBSArchive(obj).ExtractAllFiles(String(aRootDir), aOverwriteCurrentFiles);
+  except
+    on E: Exception do
+      exception_handler(E, Result);
+  end;
+end;
+
+
 function bsa_add_file_from_memory(obj: Pointer; const aFilePath: PChar; const aSize: Cardinal; const aData: PByte): TwbBSResultMessage; stdcall;
 begin
   Result.code := Ord(BSA_RESULT_NONE);
@@ -415,6 +427,7 @@ exports
   bsa_add_file_from_memory,
   bsa_add_file_from_disk_root,
   bsa_add_file_from_disk,
+  bsa_extract_all_files,
   bsa_save,
   bsa_create_archive,
   bsa_load_from_file,

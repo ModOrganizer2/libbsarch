@@ -3,6 +3,8 @@
 #include "base_types.hpp"
 #include "utils/string_convert.hpp"
 
+#include <iostream>
+
 namespace libbsarch {
 [[maybe_unused]] constexpr int max_string_buffer_size = 1024;
 

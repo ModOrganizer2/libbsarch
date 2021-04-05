@@ -11,9 +11,14 @@ bsa_saver_simple::bsa_saver_simple(bsa &&bsa)
     : bsa_(std::move(bsa))
 {}
 
-void bsa_saver_simple::add_file(disk_blob &&blob)
+void bsa_saver_simple::add_file_relative(const fs::path &relative_path)
 {
-    files_.emplace_back(std::move(blob));
+    files_.add(relative_path);
+}
+
+void bsa_saver_simple::add_file_absolute(const fs::path &absolute_path)
+{
+    files_.add(absolute_path.lexically_relative(root_dir_));
 }
 
 const fs::path &bsa_saver_simple::get_save_path() const
@@ -26,6 +31,16 @@ void bsa_saver_simple::set_save_path(fs::path path)
     save_path_ = std::move(path);
 }
 
+const fs::path &bsa_saver_simple::get_root_path() const
+{
+    return root_dir_;
+}
+
+void bsa_saver_simple::set_root_path(fs::path path)
+{
+    root_dir_ = std::move(path);
+}
+
 bsa_archive_type_t bsa_saver_simple::get_save_type() const
 {
     return save_type_;
@@ -36,34 +51,38 @@ void bsa_saver_simple::set_save_type(bsa_archive_type_t type)
     save_type_ = type;
 }
 
-void bsa_saver_simple::save(const fs::path &archive_path, bsa_archive_type_t type) const
+void bsa_saver_simple::save(const fs::path &archive_path,
+                            const fs::path &root_dir,
+                            bsa_archive_type_t type) const
 {
     if (archive_path.empty())
         throw exception("Trying to save an archive with an empty path");
 
+    if (root_dir.empty())
+        throw exception("Trying to save an archive with an empty root dir");
+
     if (type == baNone)
         throw exception("Trying to save an archive with a None type");
-
-    bsa_entry_list entries;
-    for (const auto &file : files_)
-    {
-        entries.add(file.path_in_archive);
-    }
 
     auto create_result = bsa_create_archive(bsa_.get_unchecked().get(),
                                             archive_path.wstring().c_str(),
                                             type,
-                                            entries.get_unchecked().get());
+                                            files_.get_unchecked().get());
     checkResult(create_result);
 
-    for (const auto &file : files_)
-    {
-        const auto &result = bsa_add_file_from_disk(bsa_.get_unchecked().get(),
-                                                    file.path_in_archive.wstring().c_str(),
-                                                    file.path_on_disk.wstring().c_str());
+    auto root = root_dir_;
+    bsa_iterate_files(
+        bsa_.get_unchecked().get(),
+        [](auto archive, const wchar_t *file_path, auto, auto, void *context) {
+            const auto &root = *static_cast<fs::path *>(context);
+            const auto path = fs::path(file_path);
 
-        checkResult(result);
-    }
+            const auto result = bsa_add_file_from_disk(archive, file_path, (root / path).wstring().c_str());
+
+            checkResult(result);
+            return false;
+        },
+        &root);
 
     const auto &result = bsa_save(bsa_.get_unchecked().get());
     checkResult(result);
@@ -71,7 +90,7 @@ void bsa_saver_simple::save(const fs::path &archive_path, bsa_archive_type_t typ
 
 void bsa_saver_simple::save() const
 {
-    save(save_path_, save_type_);
+    save(save_path_, root_dir_, save_type_);
 }
 
 void bsa_saver_simple::close()
@@ -79,7 +98,7 @@ void bsa_saver_simple::close()
     bsa_.close();
 }
 
-const std::vector<disk_blob> &bsa_saver_simple::get_file_list() const
+const bsa_entry_list &bsa_saver_simple::get_file_list() const
 {
     return files_;
 }

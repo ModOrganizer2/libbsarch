@@ -21,25 +21,30 @@ public:
     bsa_saver_simple &operator=(const bsa_saver_simple &) = delete;
     bsa_saver_simple &operator=(bsa_saver_simple &&) = default;
 
-    void add_file(disk_blob &&blob);
+    void add_file_relative(const fs::path &relative_path);
+    void add_file_absolute(const fs::path &absolute_path);
 
     const fs::path &get_save_path() const;
     void set_save_path(fs::path path);
 
+    const fs::path &get_root_path() const;
+    void set_root_path(fs::path path);
+
     bsa_archive_type_t get_save_type() const;
     void set_save_type(bsa_archive_type_t type);
 
-    void save(const fs::path &archive_path, bsa_archive_type_t type) const;
+    void save(const fs::path &archive_path, const fs::path &root_dir, bsa_archive_type_t type) const;
     void save() const;
     void close();
 
-    const std::vector<disk_blob> &get_file_list() const;
+    const bsa_entry_list &get_file_list() const;
 
 private:
     bsa bsa_;
 
-    std::vector<disk_blob> files_;
+    bsa_entry_list files_;
     fs::path save_path_;
+    fs::path root_dir_;
     bsa_archive_type_t save_type_ = baNone;
 };
 
