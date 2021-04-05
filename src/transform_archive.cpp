@@ -3,8 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-#pragma once
-
 #include "transform_archive.hpp"
 #include "bsa_saver.hpp"
 #include "utils/scope_fail.hpp"
@@ -13,7 +11,7 @@ namespace libbsarch {
 
 void transform_archive(const bsa &source,
                        const fs::path &target_path,
-                       transform_callback callback,
+                       const transform_callback &callback,
                        bsa_archive_type_t type)
 {
     const auto &files = source.list_files();

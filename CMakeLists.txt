@@ -113,6 +113,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
 
     target_compile_options(libbsarch_tests PRIVATE
       $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-      $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror>
+      $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wno-c++98-compat -Wno-c++98-compat-pedantic>
     )
 endif()

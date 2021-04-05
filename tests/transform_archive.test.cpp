@@ -8,7 +8,7 @@
 #include "../src/bsa_saver.hpp"
 #include "../src/transform_archive.hpp"
 
-#include "utils.hpp"
+#include "Utils.hpp"
 
 using namespace libbsarch;
 
@@ -19,7 +19,7 @@ TEST_CASE("Transform archive")
 
     REQUIRE(make_file(temp_file_path, "some data"));
 
-    for (auto type : standard_types)
+    for (const auto &type : standard_types)
     {
         const fs::path input_archive_path = get_absolute_file_path(type.str + " - input.bsa");
         const fs::path output_archive_path = get_absolute_file_path(type.str + " - output.bsa");
@@ -30,15 +30,16 @@ TEST_CASE("Transform archive")
         REQUIRE_NOTHROW(saver.set_save_type(type.type));
         REQUIRE_NOTHROW(saver.set_save_path(input_archive_path));
 
-        disk_blob file(root_directory(), temp_absolute_file_path);
-
-        REQUIRE_NOTHROW(saver.add_file(std::move(file)));
+        REQUIRE_NOTHROW(saver.add_file_absolute(temp_absolute_file_path));
         REQUIRE_NOTHROW(saver.save());
 
         REQUIRE_NOTHROW(saver.close());
 
         //Transforming it
-        transform_archive(input_archive_path,
+        bsa input;
+        input.load(input_archive_path);
+
+        transform_archive(input,
                           output_archive_path,
                           []([[maybe_unused]] const fs::path &relative_path, extracted_data &&blob) {
                               return to_vector(std::move(blob)); // Do nothing

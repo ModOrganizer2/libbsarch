@@ -14,7 +14,7 @@ using transform_callback = std::function<std::vector<std::byte>(const fs::path &
 
 void transform_archive(const bsa &source,
                        const fs::path &target_path,
-                       transform_callback callback,
+                       const transform_callback &callback,
                        bsa_archive_type_t type = bsa_archive_type_t::baNone);
 
 } // namespace libbsarch
