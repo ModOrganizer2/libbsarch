@@ -37,6 +37,7 @@ public:
     void save() const;
     void close();
 
+    bsa &get_bsa() { return bsa_; }
     const bsa_entry_list &get_file_list() const;
 
 private:
@@ -67,6 +68,8 @@ public:
 
     void save() const;
     void close();
+
+    bsa &get_bsa() { return bsa_; }
 
 private:
     bsa bsa_;
