@@ -23,6 +23,11 @@ void transform_archive(const bsa &source,
         type = source.get_type();
 
     bsa target;
+    target.set_archive_flags(source.get_archive_flags());
+    target.set_file_flags(source.get_file_flags());
+    target.set_compressed(source.get_compressed());
+    target.set_share_data(source.get_share_data());
+
     bsa_saver_complex target_saver(std::move(target));
 
     target_saver.prepare(target_path, std::move(entries), type);
