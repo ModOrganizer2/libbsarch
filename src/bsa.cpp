@@ -120,6 +120,11 @@ void bsa::extract_all_to_disk(const fs::path &directory, bool overwrite_current_
     bsa_extract_all_files(archive_.get(), dir.c_str(), overwrite_current_files);
 }
 
+void bsa::iterate_files(bsa_file_iteration_proc_t file_iteration_proc, void *context) const
+{
+    bsa_iterate_files(archive_.get(), file_iteration_proc, context);
+}
+
 file_record bsa::find_file_record(const fs::path &filename)
 {
     return {bsa_find_file_record(archive_.get(), filename.wstring().c_str())};

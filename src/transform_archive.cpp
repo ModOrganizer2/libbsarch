@@ -28,12 +28,20 @@ void transform_archive(const bsa &source,
     target_saver.prepare(target_path, std::move(entries), type);
     scope_fail guard([target_path] { fs::remove(target_path); });
 
-    for (const auto &relative_path : files)
-    {
-        extracted_data input_blob = source.extract_to_memory(relative_path);
-        auto output = callback(relative_path, std::move(input_blob));
-        target_saver.add_file(relative_path, std::move(output));
-    }
+    auto context = std::make_tuple(&source, &callback, &target_saver);
+    using context_type = decltype(context);
+
+    target_saver.get_bsa().iterate_files(
+        [](auto, const wchar_t *file_path, auto, auto, void *context) {
+            auto [source, callback, target_saver] = *static_cast<context_type *>(context);
+            const fs::path relative_path(file_path);
+            extracted_data input_blob = source->extract_to_memory(relative_path);
+            auto output = (*callback)(relative_path, std::move(input_blob));
+            target_saver->add_file(relative_path, std::move(output));
+            return false;
+        },
+        &context);
+
     target_saver.save();
 }
 

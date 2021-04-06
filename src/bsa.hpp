@@ -85,6 +85,8 @@ public:
         bsa_file_dds_info_callback_set(archive_.get(), dds_function, nullptr);
     }
 
+    void iterate_files(bsa_file_iteration_proc_t file_iteration_proc, void *context) const;
+
     const detail::bsa_wrapper &get_unchecked() const;
     detail::bsa_wrapper &get_unchecked();
 

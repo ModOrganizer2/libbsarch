@@ -71,8 +71,7 @@ void bsa_saver_simple::save(const fs::path &archive_path,
     checkResult(create_result);
 
     auto root = root_dir_;
-    bsa_iterate_files(
-        bsa_.get_unchecked().get(),
+    bsa_.iterate_files(
         [](auto archive, const wchar_t *file_path, auto, auto, void *context) {
             const auto &root = *static_cast<fs::path *>(context);
             const auto path = fs::path(file_path);
