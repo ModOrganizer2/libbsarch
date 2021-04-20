@@ -1395,8 +1395,8 @@ begin
       fHeaderTES4.FileFlags := fHeaderTES4.FileFlags and not FILE_MISC;
 
     // embedded names in texture only archives
-    if fHeaderTES4.FileFlags = FILE_DDS then
-      fHeaderTES4.Flags := fHeaderTES4.Flags or ARCHIVE_EMBEDNAME;
+    if (fHeaderTES4.FileFlags = FILE_DDS) and ((fType <> baSSE) or fCompress) then
+        fHeaderTES4.Flags := fHeaderTES4.Flags or ARCHIVE_EMBEDNAME;
 
     // startupstr flag in archives with meshes
     if fHeaderTES4.FileFlags and FILE_NIF <> 0 then
@@ -1630,8 +1630,6 @@ end;
 
 procedure TwbBSArchive.AddFileDisk(const aFilePath, aSourcePath: string);
 var
-  fname: string;
-  i: Integer;
   Buffer: PByte;
   stream: TFileStream;
 begin
@@ -2490,7 +2488,8 @@ begin
   try
     fileData := bsa.ExtractFileDataCompat(aFileRecord);
   except
-    on e: Exception do begin
+    on e: Exception do
+    begin
       bsa.ReleaseFileDataCompat(fileData);
       raise Exception.Create('Unpacking error "' + fname + '": ' + e.Message);
     end;
@@ -2503,7 +2502,7 @@ begin
       Free;
     end;
 
-    bsa.ReleaseFileDataCompat(fileData);
+  bsa.ReleaseFileDataCompat(fileData);
 end;
 
 procedure TwbBSArchive.ExtractAllFiles(const aFolderName: string;
