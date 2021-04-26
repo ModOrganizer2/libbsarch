@@ -2,12 +2,19 @@
 
 #include "dds.h"
 #include <dxgiformat.h>
+#include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+    using DirectX::DDS_HEADER;
+#endif
+
 #ifdef BSARCH_DLL_EXPORT
-#define BSARCH_DLL_API(ReturnType) extern "C" __declspec(dllexport) ReturnType __stdcall
+#define BSARCH_DLL_API(ReturnType) __declspec(dllexport) ReturnType __stdcall
 #else
-#define BSARCH_DLL_API(ReturnType) extern "C" __declspec(dllimport) ReturnType __stdcall
+#define BSARCH_DLL_API(ReturnType) __declspec(dllimport) ReturnType __stdcall
 #endif
 
 #ifdef __GNUC__
@@ -35,7 +42,7 @@ typedef struct bsa_dds_info_s
 
 PACKED(struct bsa_dds_header_s {
     uint32_t magic; // DDS_MAGIC
-    struct DirectX::DDS_HEADER header;
+    struct DDS_HEADER header;
 });
 
 typedef struct bsa_dds_header_s bsa_dds_header_t;
@@ -146,5 +153,10 @@ BSARCH_DLL_API(bool) bsa_share_data_get(bsa_archive_t archive);
 BSARCH_DLL_API(void) bsa_share_data_set(bsa_archive_t archive, bool flags);
 
 BSARCH_DLL_API(void)
-bsa_file_dds_info_callback_set(bsa_archive_t archive, bsa_file_dds_info_proc_t file_dds_info_proc, void *context);
+bsa_file_dds_info_callback_set(bsa_archive_t archive,
+                               bsa_file_dds_info_proc_t file_dds_info_proc,
+                               void *context);
 
+#ifdef __cplusplus
+}
+#endif

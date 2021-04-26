@@ -3,51 +3,17 @@ cmake_minimum_required(VERSION 3.5..3.20)
 option(copy_dll_to_binary_dir "Will copy libbsarch DLL to the binary directory. May not work if libbsarch is used as a subproject" ON)
 
 # Project
-project(libbsarch CXX)
+project(libbsarch C)
 
 # Add library to build.
 add_library(libbsarch SHARED
     src/DDS.h
     src/libbsarch.h
-    src/libbsarch.cpp
+    src/libbsarch.c
     src/libbsarch.def
     )
 
-target_compile_features(libbsarch PRIVATE cxx_std_11)
 target_compile_definitions(libbsarch PRIVATE BSARCH_DLL_EXPORT)
-
-############################################################
-# libbsarch++                                              #
-############################################################
-
-add_library(libbsarch++ STATIC
-    src/libbsarch.h
-    src/dds.h
-
-    src/libbsarch.hpp
-
-    src/base_types.cpp
-    src/base_types.hpp
-
-    src/bsa.cpp
-    src/bsa.hpp
-
-    src/bsa_saver.cpp
-    src/bsa_saver.hpp
-
-    src/bsa_entry_list.cpp
-    src/bsa_entry_list.hpp
-
-    src/transform_archive.cpp
-    src/transform_archive.hpp
-
-    src/utils/string_convert.cpp
-    src/utils/string_convert.hpp
-
-    src/utils/scope_fail.hpp
-    )
-
-
 ## Copying the corresponding DLL ##
 
 #Finding 32 or 64bits
@@ -75,28 +41,4 @@ if(copy_dll_to_binary_dir)
         ${libbsarch_dll_path}
         ${CMAKE_BINARY_DIR}/libbsarch.dll)
     message("libbsarch: Copying the DLL to ${CMAKE_BINARY_DIR}/libbsarch.dll")
-endif()
-
-target_link_libraries(libbsarch++ PUBLIC libbsarch)
-target_compile_features(libbsarch++ PRIVATE cxx_std_17)
-target_compile_definitions(libbsarch++ PRIVATE _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
-
-# Tests
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
-    add_executable(libbsarch_tests
-        tests/main.test.cpp
-
-        tests/transform_archive.test.cpp
-        tests/save_and_load.test.cpp
-
-        tests/utils.hpp
-        tests/utils.cpp)
-
-    target_link_libraries(libbsarch_tests PUBLIC libbsarch++)
-    target_compile_features(libbsarch_tests PRIVATE cxx_std_17)
-
-    target_compile_options(libbsarch_tests PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wno-c++98-compat -Wno-c++98-compat-pedantic>
-        )
 endif()

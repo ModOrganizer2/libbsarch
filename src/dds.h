@@ -21,12 +21,15 @@
 #include <dxgiformat.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
 namespace DirectX {
+#endif
+
 #pragma pack(push, 1)
 
 const uint32_t DDS_MAGIC = 0x20534444; // "DDS "
 
-struct DDS_PIXELFORMAT
+typedef struct DDS_PIXELFORMAT
 {
     uint32_t size;
     uint32_t flags;
@@ -36,7 +39,7 @@ struct DDS_PIXELFORMAT
     uint32_t GBitMask;
     uint32_t BBitMask;
     uint32_t ABitMask;
-};
+} DDS_PIXELFORMAT;
 
 #define DDS_FOURCC 0x00000004      // DDPF_FOURCC
 #define DDS_RGB 0x00000040         // DDPF_RGB
@@ -51,9 +54,8 @@ struct DDS_PIXELFORMAT
 
 #ifndef MAKEFOURCC
 #define MAKEFOURCC(ch0, ch1, ch2, ch3) \
-    (static_cast<uint32_t>(static_cast<uint8_t>(ch0)) | (static_cast<uint32_t>(static_cast<uint8_t>(ch1)) << 8) \
-     | (static_cast<uint32_t>(static_cast<uint8_t>(ch2)) << 16) \
-     | (static_cast<uint32_t>(static_cast<uint8_t>(ch3)) << 24))
+    ((uint32_t)((uint8_t)(ch0)) | ((uint32_t)((uint8_t)(ch1)) << 8) | ((uint32_t)((uint8_t)(ch2)) << 16) \
+     | ((uint32_t)((uint8_t)(ch3)) << 24))
 #endif /* defined(MAKEFOURCC) */
 
 extern __declspec(selectany) const DDS_PIXELFORMAT
@@ -205,7 +207,7 @@ enum DDS_ALPHA_MODE
     DDS_ALPHA_MODE_CUSTOM = 4,
 };
 
-struct DDS_HEADER
+typedef struct DDS_HEADER
 {
     uint32_t size;
     uint32_t flags;
@@ -221,20 +223,23 @@ struct DDS_HEADER
     uint32_t caps3;
     uint32_t caps4;
     uint32_t reserved2;
-};
+} DDS_HEADER;
 
-struct DDS_HEADER_DXT10
+typedef struct DDS_HEADER_DXT10
 {
     DXGI_FORMAT dxgiFormat;
     uint32_t resourceDimension;
     uint32_t miscFlag; // see D3D11_RESOURCE_MISC_FLAG
     uint32_t arraySize;
     uint32_t miscFlags2; // see DDS_MISC_FLAGS2
-};
+} DDS_HEADER_DXT10;
 
 #pragma pack(pop)
+
+#ifdef __cplusplus
 
 static_assert(sizeof(DDS_HEADER) == 124, "DDS Header size mismatch");
 static_assert(sizeof(DDS_HEADER_DXT10) == 20, "DDS DX10 Extended Header size mismatch");
 
 } // namespace DirectX
+#endif
