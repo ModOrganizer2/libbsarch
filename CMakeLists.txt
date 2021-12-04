@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5..3.15)
+cmake_minimum_required(VERSION 3.16)
 
 option(copy_dll_to_binary_dir "Will copy libbsarch DLL to the binary directory. May not work if libbsarch is used as a subproject" ON)
 
@@ -40,7 +40,7 @@ add_custom_command(TARGET libbsarch POST_BUILD
 # libbsarch_OOP                                            #
 ############################################################
 
-find_package(Qt5 OPTIONAL_COMPONENTS Core)
+find_package(Qt6 COMPONENTS Core REQUIRED)
 
 add_library(libbsarch_OOP STATIC
     src/base_types.hpp
@@ -95,9 +95,9 @@ if(copy_dll_to_binary_dir)
 endif()
 
 #Adding Qt support
-if(Qt5_FOUND)
-    message("libbsarch: Qt5 found, enabling Qt support")
-    target_link_libraries(libbsarch_OOP PUBLIC Qt5::Core)
+if(Qt6_FOUND)
+    message("libbsarch: Qt6 found, enabling Qt support")
+    target_link_libraries(libbsarch_OOP PUBLIC Qt::Core)
     target_compile_definitions(libbsarch PUBLIC "QT")
     target_compile_definitions(libbsarch_OOP PUBLIC "QT")
 endif()
