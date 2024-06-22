@@ -9,6 +9,10 @@ uses
   wbBSArchive;
 
 type
+  TwbBSResultBuffer = packed record
+    size: Cardinal;
+    data: PByte;
+  end;
   TwbBSResultCode = (
     BSA_RESULT_NONE = 0,
     BSA_RESULT_EXCEPTION = -1
@@ -68,7 +72,7 @@ end;
 function bsa_entry_list_create:Pointer; stdcall;
 begin
   try
-    Result := TwbBSEntryList.Create;
+    Result := TStringList.Create;
   except
     Result := nil;
   end;
@@ -78,8 +82,8 @@ function bsa_entry_list_free(obj: Pointer): TwbBSResultMessage; stdcall;
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    TwbBSEntryList(obj).Clear();
-    TwbBSEntryList(obj).free;
+    TStringList(obj).Clear();
+    TStringList(obj).free;
   except
     on E: Exception do
       exception_handler(E, Result);
@@ -89,7 +93,7 @@ end;
 function bsa_entry_list_count(obj: Pointer): Integer; stdcall;
 begin
   try
-    Result := TwbBSEntryList(obj).Count;
+    Result := TStringList(obj).Count;
   except
     Result := Ord(BSA_RESULT_EXCEPTION);
   end;
@@ -99,7 +103,7 @@ function bsa_entry_list_add(obj: Pointer; const aEntryString: PChar): TwbBSResul
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    TwbBSEntryList(obj).Add(String(aEntryString));
+    TStringList(obj).Add(String(aEntryString));
   except
     on E: Exception do
       exception_handler(E, Result);
@@ -109,7 +113,7 @@ end;
 function bsa_entry_list_get(obj: Pointer; const aIndex: Cardinal; const aStringBufferSize: Cardinal; const aStringBuffer: PChar): Integer; stdcall;
 begin
   try
-    Result := string_to_cstring_end(TwbBSEntryList(obj).Strings[aIndex], aStringBufferSize, aStringBuffer);
+    Result := string_to_cstring_end(TStringList(obj).Strings[aIndex], aStringBufferSize, aStringBuffer);
   except
     Result := Integer(BSA_RESULT_EXCEPTION);
   end;
@@ -148,7 +152,7 @@ begin
   end;
 end;
 
-function bsa_create_archive(obj: Pointer; const aFilePath: PChar; aType: TBSArchiveType; aFileList: TwbBSEntryList): TwbBSResultMessage; stdcall;
+function bsa_create_archive(obj: Pointer; const aFilePath: PChar; aType: TBSArchiveType; aFileList: TStringList): TwbBSResultMessage; stdcall;
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
@@ -193,10 +197,14 @@ begin
 end;
 
 function bsa_add_file_from_memory(obj: Pointer; const aFilePath: PChar; const aSize: Cardinal; const aData: PByte): TwbBSResultMessage; stdcall;
+var
+  Buffer: TBytes;
 begin
   Result.code := Ord(BSA_RESULT_NONE);
+  SetLength(Buffer, aSize);
+  Move(aData[0], Buffer[0], aSize);
   try
-    TwbBSArchive(obj).AddFileData(String(aFilePath), aSize, aData);
+    TwbBSArchive(obj).AddFileData(String(aFilePath), Buffer);
   except
     on E: Exception do
       exception_handler(E, Result);
@@ -213,10 +221,14 @@ begin
 end;
 
 function bsa_extract_file_data_by_record(obj: Pointer; aFileRecord: Pointer): TwbBSResultMessageBuffer; stdcall;
+var
+  Buffer: TBytes;
 begin
   Result.message.code := Ord(BSA_RESULT_NONE);
   try
-    Result.buffer := TwbBSArchive(obj).ExtractFileData(aFileRecord);
+    Buffer := TwbBSArchive(obj).ExtractFileData(aFileRecord);
+    Result.buffer.data := @Buffer[0];
+    Result.buffer.size := Length(Buffer);
   except
     on E: Exception do
       buffer_exception_handler(E, Result);
@@ -224,10 +236,14 @@ begin
 end;
 
 function bsa_extract_file_data_by_filename(obj: Pointer; const aFilePath: PChar): TwbBSResultMessageBuffer; stdcall;
+var
+  Buffer: TBytes;
 begin
   Result.message.code := Ord(BSA_RESULT_NONE);
   try
-    Result.buffer := TwbBSArchive(obj).ExtractFileData(String(aFilePath));
+    Buffer := TwbBSArchive(obj).ExtractFileData(String(aFilePath));
+    Result.buffer.data := @Buffer[0];
+    Result.buffer.size := Length(Buffer);
   except
     on E: Exception do
       buffer_exception_handler(E, Result);
@@ -238,7 +254,8 @@ function bsa_file_data_free(obj: Pointer; fileDataResult: TwbBSResultMessageBuff
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    TwbBSArchive(obj).ReleaseFileData(fileDataResult.buffer);
+    FreeMem(fileDataResult.buffer.data);
+    fileDataResult.buffer.size := 0;
   except
     on E: Exception do
       exception_handler(E, Result);
@@ -276,7 +293,7 @@ begin
   end;
 end;
 
-function bsa_get_resource_list(obj: Pointer; const aEntryResultList: TwbBSEntryList; aFolder: PChar): TwbBSResultMessage; stdcall;
+function bsa_get_resource_list(obj: Pointer; const aEntryResultList: TStringList; aFolder: PChar): TwbBSResultMessage; stdcall;
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
