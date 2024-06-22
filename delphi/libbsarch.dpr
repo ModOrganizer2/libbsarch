@@ -152,7 +152,7 @@ function bsa_create_archive(obj: Pointer; const aFilePath: PChar; aType: TBSArch
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    TwbBSArchive(obj).CreateArchiveCompat(String(aFilePath), aType, aFileList);
+    TwbBSArchive(obj).CreateArchive(String(aFilePath), aType, aFileList);
   except
     on E: Exception do
       exception_handler(E, Result);
@@ -196,7 +196,7 @@ function bsa_add_file_from_memory(obj: Pointer; const aFilePath: PChar; const aS
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    TwbBSArchive(obj).AddFileDataCompat(String(aFilePath), aSize, aData);
+    TwbBSArchive(obj).AddFileData(String(aFilePath), aSize, aData);
   except
     on E: Exception do
       exception_handler(E, Result);
@@ -216,7 +216,7 @@ function bsa_extract_file_data_by_record(obj: Pointer; aFileRecord: Pointer): Tw
 begin
   Result.message.code := Ord(BSA_RESULT_NONE);
   try
-    Result.buffer := TwbBSArchive(obj).ExtractFileDataCompat(aFileRecord);
+    Result.buffer := TwbBSArchive(obj).ExtractFileData(aFileRecord);
   except
     on E: Exception do
       buffer_exception_handler(E, Result);
@@ -227,7 +227,7 @@ function bsa_extract_file_data_by_filename(obj: Pointer; const aFilePath: PChar)
 begin
   Result.message.code := Ord(BSA_RESULT_NONE);
   try
-    Result.buffer := TwbBSArchive(obj).ExtractFileDataCompat(String(aFilePath));
+    Result.buffer := TwbBSArchive(obj).ExtractFileData(String(aFilePath));
   except
     on E: Exception do
       buffer_exception_handler(E, Result);
@@ -238,7 +238,7 @@ function bsa_file_data_free(obj: Pointer; fileDataResult: TwbBSResultMessageBuff
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    TwbBSArchive(obj).ReleaseFileDataCompat(fileDataResult.buffer);
+    TwbBSArchive(obj).ReleaseFileData(fileDataResult.buffer);
   except
     on E: Exception do
       exception_handler(E, Result);
@@ -256,11 +256,11 @@ begin
   end;
 end;
 
-function bsa_iterate_files(obj: Pointer; aProc: TBSFileIterationProcCompat; aContext: Pointer): TwbBSResultMessage; stdcall;
+function bsa_iterate_files(obj: Pointer; aProc: TBSFileIterationProc; aContext: Pointer): TwbBSResultMessage; stdcall;
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    TwbBSArchive(obj).IterateFilesCompat(aProc, aContext);
+    TwbBSArchive(obj).IterateFiles(aProc, aContext);
   except
     on E: Exception do
       exception_handler(E, Result);
@@ -280,23 +280,12 @@ function bsa_get_resource_list(obj: Pointer; const aEntryResultList: TwbBSEntryL
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    TwbBSArchive(obj).ResourceListCompat(aEntryResultList, String(aFolder));
+    TwbBSArchive(obj).ResourceList(aEntryResultList, String(aFolder));
   except
     on E: Exception do
       exception_handler(E, Result);
   end;
 end;
-
-function bsa_resolve_hash(obj: Pointer; const aHash: UInt64; const aEntryResultList: TwbBSEntryList): TwbBSResultMessage; stdcall;
-begin
-  Result.code := Ord(BSA_RESULT_NONE);
-  try
-    TwbBSArchive(obj).ResolveHashCompat(aHash, aEntryResultList);
-  except
-    on E: Exception do
-      exception_handler(E, Result);
-  end;
-end;     
 
 function bsa_close(obj: Pointer): TwbBSResultMessage; stdcall;
 begin
@@ -374,7 +363,7 @@ begin
   TwbBSArchive(obj).ShareData := shareData;
 end;
 
-procedure bsa_file_dds_info_callback_set(obj: Pointer; aProc: TBSFileDDSInfoProcCompat; aContext: Pointer); stdcall;
+procedure bsa_file_dds_info_callback_set(obj: Pointer; aProc: TBSFileDDSInfoProc; aContext: Pointer); stdcall;
 begin
   TwbBSArchive(obj).DDSInfoProc := aProc;
   TwbBSArchive(obj).DDSInfoProcContext := aContext;
@@ -403,7 +392,6 @@ exports
   bsa_file_dds_info_callback_set,
 
   bsa_close,
-  bsa_resolve_hash,
   bsa_get_resource_list,
   bsa_file_exists,
   bsa_iterate_files,

@@ -22,7 +22,6 @@ EXPORTS
  bsa_iterate_files
  bsa_file_exists
  bsa_get_resource_list
- bsa_resolve_hash
  bsa_close
  bsa_filename_get
  bsa_archive_type_get

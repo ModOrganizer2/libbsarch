@@ -75,7 +75,9 @@ typedef enum bsa_archive_type_e
     baFO3,
     baSSE,
     baFO4,
-    baFO4dds
+    baFO4dds,
+    baSF,
+    baSFdds
 } bsa_archive_type_t;
 
 typedef void (*bsa_file_dds_info_proc_t)(bsa_archive_t archive,
@@ -123,8 +125,6 @@ bsa_iterate_files(bsa_archive_t archive, bsa_file_iteration_proc_t file_iteratio
 BSARCH_DLL_API(bool) bsa_file_exists(bsa_archive_t archive, const wchar_t *file_path);
 BSARCH_DLL_API(bsa_result_message_t)
 bsa_get_resource_list(bsa_archive_t archive, bsa_entry_list_t entry_result_list, const wchar_t *folder);
-BSARCH_DLL_API(bsa_result_message_t)
-bsa_resolve_hash(bsa_archive_t archive, uint64_t hash, bsa_entry_list_t entry_result_list);
 BSARCH_DLL_API(bsa_result_message_t) bsa_close(bsa_archive_t archive);
 
 BSARCH_DLL_API(uint32_t)
