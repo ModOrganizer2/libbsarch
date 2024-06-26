@@ -9,10 +9,6 @@ uses
   wbBSArchive;
 
 type
-  TwbBSResultBuffer = packed record
-    size: Cardinal;
-    data: PByte;
-  end;
   TwbBSResultCode = (
     BSA_RESULT_NONE = 0,
     BSA_RESULT_EXCEPTION = -1
@@ -197,14 +193,10 @@ begin
 end;
 
 function bsa_add_file_from_memory(obj: Pointer; const aFilePath: PChar; const aSize: Cardinal; const aData: PByte): TwbBSResultMessage; stdcall;
-var
-  Buffer: TBytes;
 begin
   Result.code := Ord(BSA_RESULT_NONE);
-  SetLength(Buffer, aSize);
-  Move(aData[0], Buffer[0], aSize);
   try
-    TwbBSArchive(obj).AddFileData(String(aFilePath), Buffer);
+    TwbBSArchive(obj).AddFileData(String(aFilePath), aSize, aData);
   except
     on E: Exception do
       exception_handler(E, Result);
@@ -221,14 +213,10 @@ begin
 end;
 
 function bsa_extract_file_data_by_record(obj: Pointer; aFileRecord: Pointer): TwbBSResultMessageBuffer; stdcall;
-var
-  Buffer: TBytes;
 begin
   Result.message.code := Ord(BSA_RESULT_NONE);
   try
-    Buffer := TwbBSArchive(obj).ExtractFileData(aFileRecord);
-    Result.buffer.data := @Buffer[0];
-    Result.buffer.size := Length(Buffer);
+    Result.buffer := TwbBSArchive(obj).ExtractFileData(aFileRecord);
   except
     on E: Exception do
       buffer_exception_handler(E, Result);
@@ -236,14 +224,10 @@ begin
 end;
 
 function bsa_extract_file_data_by_filename(obj: Pointer; const aFilePath: PChar): TwbBSResultMessageBuffer; stdcall;
-var
-  Buffer: TBytes;
 begin
   Result.message.code := Ord(BSA_RESULT_NONE);
   try
-    Buffer := TwbBSArchive(obj).ExtractFileData(String(aFilePath));
-    Result.buffer.data := @Buffer[0];
-    Result.buffer.size := Length(Buffer);
+    Result.buffer := TwbBSArchive(obj).ExtractFileData(String(aFilePath));
   except
     on E: Exception do
       buffer_exception_handler(E, Result);
@@ -254,8 +238,7 @@ function bsa_file_data_free(obj: Pointer; fileDataResult: TwbBSResultMessageBuff
 begin
   Result.code := Ord(BSA_RESULT_NONE);
   try
-    FreeMem(fileDataResult.buffer.data);
-    fileDataResult.buffer.size := 0;
+    TwbBSArchive(obj).ReleaseFileData(fileDataResult.buffer);
   except
     on E: Exception do
       exception_handler(E, Result);
