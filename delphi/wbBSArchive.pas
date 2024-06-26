@@ -232,11 +232,11 @@ type
   TBSArchiveType = (baNone, baTES3, baTES4, baFO3, baSSE, baFO4, baFO4dds, baSF, baSFdds);
   TBSArchiveState = (stReading, stWriting);
   TBSArchiveStates = set of TBSArchiveState;
-  TBSFileIterationProc = function(aArchive: TwbBSArchive; const aFileName: string;
+  TBSFileIterationProc = function(aArchive: Pointer; const aFileName: string;
     aFileRecord: Pointer; aFolderRecord: Pointer; aData: Pointer): Boolean; stdcall;
 
   TDDSInfo = record Width, Height, MipMaps: Integer; end;
-  TBSFileDDSInfoProc = procedure(aArchive: TwbBSArchive; const aFileName: string;
+  TBSFileDDSInfoProc = procedure(aArchive: Pointer; const aFileName: string;
     var aInfo: TDDSInfo; aContext: Pointer); stdcall;
 
   TwbBSHeaderTES3 = packed record
@@ -346,6 +346,11 @@ type
   end;
   PPackedDataInfo = ^TPackedDataInfo;
 
+  TwbBSResultBuffer = packed record
+    size: Cardinal;
+    data: PByte;
+  end;
+
   TwbBSArchive = class
   private
     fStream: TwbBaseCachedFileStream;
@@ -413,11 +418,11 @@ type
     procedure Save;
     procedure AddFileDisk(const aFilePath, aSourcePath: string);
     procedure AddFileDiskRoot(const aRootDir, aSourcePath: string);
-    procedure AddFileData(const aFileName: string; const aData: TBytes); overload;
+    procedure AddFileData(const aFileName: string; const aSize: Cardinal; const aData: PByte); overload;
     function FindFileRecord(const aFileName: string): Pointer;
-    function ExtractFileData(aFileRecord: Pointer): TBytes; overload;
-    function ExtractFileData(const aFileName: string): TBytes; overload;
-    procedure ExtractFileToStream(const aFileName: string; aStream: TStream);
+    function ExtractFileData(aFileRecord: Pointer): TwbBSResultBuffer; overload;
+    function ExtractFileData(const aFileName: string): TwbBSResultBuffer; overload;
+    procedure ReleaseFileData(fileDataResult: TwbBSResultBuffer);
     procedure ExtractFile(const aFileName, aSaveAs: string);
     procedure IterateFiles(aProc: TBSFileIterationProc; aData: Pointer = nil;
       aSingleThreaded: Boolean = False);
@@ -1757,19 +1762,26 @@ procedure TwbBSArchive.AddFileDisk(const aFilePath, aSourcePath: string);
 var
   fname: string;
   i: integer;
-  Buffer: TBytes;
+  buffer: PByte;
+  stream: TFileStream;
 begin
   if not (stWriting in fStates) then
     raise Exception.Create('Archive is not in writing mode');
 
-  with TFileStream.Create(aSourcePath, fmOpenRead + fmShareDenyNone) do try
-    SetLength(Buffer, Size);
-    Read(Buffer[0], Length(Buffer));
+  stream := TFileStream.Create(aSourcePath, fmOpenRead + fmShareDenyNone);
+  try
+    // Modified: Make sure memory is zeroed when allocated
+    buffer := AllocMem(stream.Size);
+    try
+      stream.Read(buffer^, stream.Size);
+      AddFileData(aFilePath, stream.Size, buffer);
+    finally
+      if Assigned(buffer) then
+        FreeMem(buffer);
+    end;
   finally
-    Free;
+    stream.Free;
   end;
-
-  AddFileData(aFilePath, Buffer);
 end;
 
 procedure TwbBSArchive.AddFileDiskRoot(const aRootDir, aSourcePath: string);
@@ -1919,7 +1931,7 @@ begin
   end;
 end;
 
-procedure TwbBSArchive.AddFileData(const aFileName: string; const aData: TBytes);
+procedure TwbBSArchive.AddFileData(const aFileName: string; const aSize: Cardinal; const aData: PByte);
 var
   i, j, Off, MipSize, BitsPerPixel: integer;
   DataHash: TPackedDataHash;
@@ -1932,7 +1944,7 @@ begin
 
   // dds mipmaps have their own partial hash calculation down below
   if fShareData and not (fType in [baFO4dds, baSFdds]) then
-    DataHash := CalcDataHash(@aData[0], Length(aData));
+    DataHash := CalcDataHash(@aData[0], aSize);
 
   SyncBeginWrite;
   try
@@ -1941,7 +1953,7 @@ begin
         if not FindFileRecordTES3(aFileName, i) then
           raise Exception.Create('File not found in files table: ' + aFileName);
 
-        PackData(@fFilesTES3[i], aFileName, DataHash, @aData[0], Length(aData), False);
+        PackData(@fFilesTES3[i], aFileName, DataHash, @aData[0], aSize, False);
       end;
 
       baTES4, baFO3, baSSE: begin
@@ -1950,7 +1962,7 @@ begin
 
         PackData(
           @fFoldersTES4[i].Files[j], fFoldersTES4[i].Name + '\' + fFoldersTES4[i].Files[j].Name,
-          DataHash, @aData[0], Length(aData), fFoldersTES4[i].Files[j].Compress(Self)
+          DataHash, @aData[0], aSize, fFoldersTES4[i].Files[j].Compress(Self)
         );
       end;
 
@@ -1959,11 +1971,11 @@ begin
           raise Exception.Create('File not found in files table: ' + aFileName);
 
         fFilesFO4[i].Offset := fStream.Position;
-        fFilesFO4[i].Size := Length(aData);
+        fFilesFO4[i].Size := aSize;
 
         PackData(
           @fFilesFO4[i], fFilesFO4[i].Name,
-          DataHash, @aData[0], Length(aData), fFilesFO4[i].Compress(Self)
+          DataHash, @aData[0], aSize, fFilesFO4[i].Compress(Self)
         );
       end;
 
@@ -2081,7 +2093,7 @@ begin
           else begin
             // last chunk stores all remaining mipmaps
             fFilesFO4[i].TexChunks[j].EndMip := Pred(fFilesFO4[i].NumMips);
-            MipSize := Length(aData) - Off;
+            MipSize := Integer(aSize) - Off;
           end;
 
           DataHash := CalcDataHash(@aData[Off], MipSize);
@@ -2102,7 +2114,7 @@ begin
   end;
 end;
 
-function TwbBSArchive.ExtractFileData(aFileRecord: Pointer): TBytes;
+function TwbBSArchive.ExtractFileData(aFileRecord: Pointer): TwbBSResultBuffer;
 var
   FileTES3: PwbBSFileTES3;
   FileTES4: PwbBSFileTES4;
@@ -2125,8 +2137,9 @@ begin
       baTES3: begin
         FileTES3 := aFileRecord;
         fStream.Position := fDataOffset + FileTES3.Offset;
-        SetLength(Result, FileTES3.Size);
-        fStream.ReadBuffer(Result[0], Length(Result));
+        Result.size := FileTES3.Size;
+        // Modified: Make sure memory is zeroed when allocated
+        Result.data := AllocMem(FileTES3.Size);
       end;
 
       baTES4, baFO3, baSSE: begin
@@ -2145,23 +2158,27 @@ begin
 
         if bCompressed then begin
           // reading uncompressed size
-          SetLength(Result, fStream.ReadCardinal);
+          Result.size := fStream.ReadCardinal;
+          // Modified: Make sure memory is zeroed when allocated
+          Result.data := AllocMem(Result.size);
           dec(size, SizeOf(Cardinal));
-          if (Length(Result) > 0) and (size > 0) then begin
+          if (Result.size > 0) and (size > 0) then begin
             SetLength(Buffer, size);
             fStream.ReadBuffer(Buffer[0], Length(Buffer));
             SyncEndWrite;
             try
-              DecompressBuf(@Buffer[0], Length(Buffer), @Result[0], Length(Result));
+              DecompressBuf(@Buffer[0], Length(Buffer), @Result.data[0], Result.size);
             finally
               SyncBeginWrite;
             end;
           end;
         end
         else begin
-          SetLength(Result, size);
+          Result.size := size;
+          // Modified: Make sure memory is zeroed when allocated
+          Result.data := AllocMem(Result.size);
           if size > 0 then
-            fStream.ReadBuffer(Result[0], size);
+            fStream.ReadBuffer(Result.data[0], Result.size);
         end;
       end;
 
@@ -2171,17 +2188,21 @@ begin
         if FileFO4.PackedSize <> 0 then begin
           SetLength(Buffer, FileFO4.PackedSize);
           fStream.ReadBuffer(Buffer[0], Length(Buffer));
-          SetLength(Result, FileFO4.Size);
+          Result.size := FileFO4.Size;
+          // Modified: Make sure memory is zeroed when allocated
+          Result.data := AllocMem(Result.size);
           SyncEndWrite;
           try
-            DecompressBuf(@Buffer[0], Length(Buffer), @Result[0], Length(Result));
+            DecompressBuf(@Buffer[0], Length(Buffer), @Result.data[0], Result.size);
           finally
             SyncBeginWrite;
           end;
         end
         else begin
-          SetLength(Result, FileFO4.Size);
-          fStream.ReadBuffer(Result[0], Length(Result));
+          Result.size := FileFO4.Size;
+          // Modified: Make sure memory is zeroed when allocated
+          Result.data := AllocMem(Result.size);
+          fStream.ReadBuffer(Result.data[0], Result.size);
         end;
       end;
 
@@ -2191,9 +2212,12 @@ begin
         TexSize := SizeOf(TDDSHeader);
         for i := Low(FileFO4.TexChunks) to High(FileFO4.TexChunks) do
           Inc(TexSize, FileFO4.TexChunks[i].Size);
-        SetLength(Result, TexSize);
+        Result.size := Texsize;
 
-        DDSHeader := @Result[0];
+        // Modified: Make sure memory is zeroed when allocated
+        Result.data := AllocMem(Result.size);
+
+        DDSHeader := @Result.data[0];
         DDSHeader.Magic := MAGIC_DDS;
         DDSHeader.dwSize := SizeOf(TDDSHeader) - SizeOf(TMagic4);
         DDSHeader.dwWidth := FileFO4.Width;
@@ -2206,7 +2230,7 @@ begin
           DDSHeader.dwCaps := DDSHeader.dwCaps or DDSCAPS_MIPMAP or DDSCAPS_COMPLEX;
         DDSHeader.dwDepth := 1;
 
-        DDSHeaderDX10 := @Result[SizeOf(TDDSHeader)];
+        DDSHeaderDX10 := @Result.data[SizeOf(TDDSHeader)];
         DDSHeaderDX10.resourceDimension := DDS_DIMENSION_TEXTURE2D;
         DDSHeaderDX10.arraySize := 1;
 
@@ -2381,8 +2405,9 @@ begin
 
         TexSize := SizeOf(TDDSHeader);
         if DDSHeader.ddspf.dwFourCC = MAGIC_DX10 then begin
-          SetLength(Result, Length(Result) + SizeOf(TDDSHeaderDX10));
+          ReallocMem(Result.data, Result.size + SizeOf(TDDSHeaderDX10));
           Inc(TexSize, SizeOf(TDDSHeaderDX10));
+          Result.size := TexSize;
         end;
 
         // append chunks
@@ -2394,14 +2419,14 @@ begin
             fStream.ReadBuffer(Buffer[0], Length(Buffer));
             SyncEndWrite;
             try
-              DecompressBuf(@Buffer[0], Length(Buffer), @Result[TexSize], Size);
+              DecompressBuf(@Buffer[0], Length(Buffer), @Result.data[TexSize], Size);
             finally
               SyncBeginWrite;
             end;
           end
           // uncompressed chunk
           else
-            fStream.ReadBuffer(Result[TexSize], Size);
+            fStream.ReadBuffer(Result.data[TexSize], Size);
 
           Inc(TexSize, Size);
         end;
@@ -2415,7 +2440,7 @@ begin
   end;
 end;
 
-function TwbBSArchive.ExtractFileData(const aFileName: string): TBytes;
+function TwbBSArchive.ExtractFileData(const aFileName: string): TwbBSResultBuffer;
 var
   FileRecord: Pointer;
 begin
@@ -2430,25 +2455,27 @@ begin
   Result := ExtractFileData(FileRecord);
 end;
 
-procedure TwbBSArchive.ExtractFileToStream(const aFileName: string; aStream: TStream);
-var
-  FileData: TBytes;
+// Addded: For use in non-Borland C/C++
+procedure TwbBSArchive.ReleaseFileData(fileDataResult: TwbBSResultBuffer);
 begin
-  FileData := ExtractFileData(aFileName);
-  aStream.Write(FileData[0], Length(FileData));
+  FreeMem(fileDataResult.data);
+  fileDataResult.size := 0;
 end;
 
 procedure TwbBSArchive.ExtractFile(const aFileName, aSaveAs: string);
 var
   fs: TFileStream;
+  fileData: TwbBSResultBuffer;
 begin
   if not (stReading in fStates) then
     raise Exception.Create('Archive is not loaded');
 
   fs := TFileStream.Create(aSaveAs, fmCreate);
   try
-    ExtractFileToStream(aFileName, fs);
+    fileData := ExtractFileData(aFileName);
+    fs.Write(fileData.data[0], fileData.size);
   finally
+    ReleaseFileData(fileData);
     fs.Free;
   end;
 end;
