@@ -7,12 +7,11 @@ project(libbsarch CXX)
 
 # Add library to build.
 add_library(libbsarch SHARED
-    src/DDS.h
     src/libbsarch.h
     src/libbsarch.cpp
     src/libbsarch.def
-    )
-
+)
+target_include_directories(libbsarch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dds)
 target_compile_features(libbsarch PRIVATE cxx_std_11)
 
 # Preprocessor definitions
@@ -50,11 +49,9 @@ add_library(libbsarch_OOP STATIC
     src/bs_archive.h
     src/bs_archive_entries.cpp
     src/bs_archive_entries.h
-    src/dds.h
 
     src/libbsarch.hpp
     src/libbsarch.h
-    src/dds.h
 
     src/utils/convertible_string.cpp
     src/utils/convertible_string.hpp
@@ -62,7 +59,8 @@ add_library(libbsarch_OOP STATIC
     src/utils/convertible_ostream.hpp
     src/utils/string_convert.cpp
     src/utils/string_convert.hpp
-    )
+)
+target_include_directories(libbsarch_OOP PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dds)
 
 
 ## Copying the corresponding DLL ##

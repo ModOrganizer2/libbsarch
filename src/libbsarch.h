@@ -1,7 +1,7 @@
 #pragma once
 
-#include "dds.h"
 #include <dxgiformat.h>
+#include <dds.h>
 #include <stdint.h>
 
 #ifdef BSARCH_DLL_EXPORT
