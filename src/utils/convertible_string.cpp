@@ -40,16 +40,6 @@ convertible_string::convertible_string(wchar_t const *wval_array, bool to_native
         this->to_native_path();
 }
 
-#ifdef QT
-convertible_string::convertible_string(const QString &qsvalue, bool to_native_path)
-    : str_(to_string(qsvalue))
-    , auto_convert_to_native_path(to_native_path)
-{
-    if (auto_convert_to_native_path)
-        this->to_native_path();
-}
-#endif
-
 /* assignment operators */
 convertible_string &convertible_string::operator=(const std::string &value)
 {
@@ -74,16 +64,6 @@ convertible_string &convertible_string::operator=(const wchar_t *wvalue)
     return *this;
 }
 
-#ifdef QT
-convertible_string &convertible_string::operator=(const QString &qsvalue)
-{
-    str_ = to_string(qsvalue);
-    if (auto_convert_to_native_path)
-        this->to_native_path();
-    return *this;
-}
-#endif
-
 /* implicit conversion operators */
 convertible_string::operator std::string() const
 {
@@ -100,12 +80,6 @@ convertible_string::operator const wchar_t *() const
     wcscpy_s(wchar_array, wstr.length() + 1, wstr.c_str());
     return wchar_array;
 }
-#ifdef QT
-convertible_string::operator QString() const
-{
-    return to_qstring(str_);
-}
-#endif
 
 /* Util */
 bool convertible_string::remove_substring(const convertible_string &sub_str)
@@ -125,4 +99,28 @@ convertible_string &convertible_string::to_native_path()
     str_ = path.make_preferred().string();
     return *this;
 }
+
+#ifdef LIBBSARCH_QT_SUPPORT
+convertible_string::convertible_string(const QString &qsvalue, bool to_native_path)
+    : str_(to_string(qsvalue))
+    , auto_convert_to_native_path(to_native_path)
+{
+    if (auto_convert_to_native_path)
+        this->to_native_path();
+}
+
+convertible_string &convertible_string::operator=(const QString &qsvalue)
+{
+    str_ = to_string(qsvalue);
+    if (auto_convert_to_native_path)
+        this->to_native_path();
+    return *this;
+}
+
+convertible_string::operator QString() const
+{
+    return to_qstring(str_);
+}
+#endif
+
 } // namespace libbsarch

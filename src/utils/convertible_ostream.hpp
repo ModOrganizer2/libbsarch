@@ -29,7 +29,7 @@ public:
     operator std::ostream &();
     operator std::wostream &();
 
-#ifdef QT
+#ifdef LIBBSARCH_QT_SUPPORT
     operator QDebug();
     convertible_ostream &operator<<(const QString &rh);
 #endif

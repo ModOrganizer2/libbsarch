@@ -5,7 +5,7 @@
 #include "string_convert.hpp"
 
 namespace libbsarch {
-#ifdef QT
+#ifdef LIBBSARCH_QT_SUPPORT
 std::wstring to_wstring(const QString &str)
 {
 #ifdef _MSC_VER

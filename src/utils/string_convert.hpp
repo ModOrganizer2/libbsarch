@@ -4,15 +4,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 #pragma once
 
-#ifdef QT
+#ifdef LIBBSARCH_QT_SUPPORT
 #include <QDebug>
 #endif
+
 #include <codecvt>
 #include <locale>
 #include <string>
 
 namespace libbsarch {
-#ifdef QT
+#ifdef LIBBSARCH_QT_SUPPORT
 std::wstring to_wstring(const QString &str);
 std::string to_string(const QString &str);
 QString to_qstring(const std::string &str);
