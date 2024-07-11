@@ -2,7 +2,7 @@
 
 include ( "${CMAKE_CURRENT_LIST_DIR}/mo2-libbsarch-targets.cmake" )
 
-target_link_libraries(mo2::libbsarch PUBLIC mo2::libbsarch_OOP)
+target_link_libraries(mo2::libbsarch INTERFACE mo2::libbsarch_OOP)
 
 # libbsarch is usually be build in Debug or Release/RelWithDebInfo, so we need to map
 # missing configurations to avoid issue with CMP0111
@@ -14,6 +14,12 @@ if (_LIBBSARCH_HAS_RELEASE EQUAL -1)
     )
     set_property(TARGET mo2::libbsarch APPEND PROPERTY IMPORTED_CONFIGURATIONS MINSIZEREL)
     set_property(TARGET mo2::libbsarch APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+    set_target_properties(mo2::libbsarch_OOP PROPERTIES
+        MAP_IMPORTED_CONFIG_MINSIZEREL RelWithDebInfo
+        MAP_IMPORTED_CONFIG_RELEASE    RelWithDebInfo
+    )
+    set_property(TARGET mo2::libbsarch_OOP APPEND PROPERTY IMPORTED_CONFIGURATIONS MINSIZEREL)
+    set_property(TARGET mo2::libbsarch_OOP APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 else()
     set_target_properties(mo2::libbsarch PROPERTIES
         MAP_IMPORTED_CONFIG_MINSIZEREL      Release
@@ -21,4 +27,10 @@ else()
     )
     set_property(TARGET mo2::libbsarch APPEND PROPERTY IMPORTED_CONFIGURATIONS MINSIZEREL)
     set_property(TARGET mo2::libbsarch APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
+    set_target_properties(mo2::libbsarch_OOP PROPERTIES
+        MAP_IMPORTED_CONFIG_MINSIZEREL      Release
+        MAP_IMPORTED_CONFIG_RELWITHDEBINFO  Release
+    )
+    set_property(TARGET mo2::libbsarch_OOP APPEND PROPERTY IMPORTED_CONFIGURATIONS MINSIZEREL)
+    set_property(TARGET mo2::libbsarch_OOP APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
 endif()
