@@ -1,17 +1,29 @@
 cmake_minimum_required(VERSION 3.16)
 
-# Project
+include(CMakePackageConfigHelpers)
+
 project(libbsarch CXX)
 
-# Add library to build.
-add_library(libbsarch SHARED
-    src/libbsarch.h
-    src/libbsarch.cpp
-    src/libbsarch.def
+find_package(mo2-dds-header CONFIG REQUIRED)
+find_package(Qt6 COMPONENTS Core REQUIRED)
+
+get_target_property(SRCS mo2::dds-header SOURCES)
+
+# libbsarch
+add_library(libbsarch SHARED)
+target_sources(libbsarch
+    PRIVATE
+        src/libbsarch.cpp
+        src/libbsarch.def
+    PUBLIC
+        FILE_SET HEADERS
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+        FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/libbsarch.h
 )
-set_target_properties(libbsarch PROPERTIES DEBUG_POSTFIX "d")
-target_include_directories(libbsarch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dds)
-target_compile_features(libbsarch PRIVATE cxx_std_11)
+target_include_directories(libbsarch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch)
+set_target_properties(libbsarch PROPERTIES DEBUG_POSTFIX "d" CXX_STANDARD 11)
+target_link_libraries(libbsarch PUBLIC mo2::dds-header)
+target_compile_definitions(libbsarch PRIVATE BSARCH_DLL_EXPORT)
 
 # preprocessor definitions
 if(MSVC)
@@ -22,52 +34,59 @@ if(MSVC)
     )
 endif()
 
-target_compile_definitions(libbsarch PRIVATE BSARCH_DLL_EXPORT)
 
-#We only want the lib file. The DLL will be provided by Delphi
-#Removing the generated DLL
-add_custom_command(TARGET libbsarch POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove
-    ${CMAKE_CURRENT_BINARY_DIR}/libbsarch.dll)
+# libbsarch_OOP
+add_library(libbsarch_OOP STATIC)
 
-############################################################
-# libbsarch_OOP                                            #
-############################################################
-
-find_package(Qt6 COMPONENTS Core REQUIRED)
-
-add_library(libbsarch_OOP STATIC
-    src/base_types.hpp
-    src/bs_archive_auto.cpp
-    src/bs_archive_auto.hpp
-    src/bs_archive.cpp
-    src/bs_archive.h
-    src/bs_archive_entries.cpp
-    src/bs_archive_entries.h
-
-    src/libbsarch.hpp
-    src/libbsarch.h
-
-    src/utils/convertible_string.cpp
-    src/utils/convertible_string.hpp
-    src/utils/convertible_ostream.cpp
-    src/utils/convertible_ostream.hpp
-    src/utils/string_convert.cpp
-    src/utils/string_convert.hpp
+target_sources(libbsarch_OOP
+    PRIVATE
+        src/bs_archive_entries.cpp
+        src/utils/string_convert.cpp
+        src/utils/convertible_ostream.cpp
+        src/utils/convertible_string.cpp
+        src/bs_archive_auto.cpp
+        src/bs_archive.cpp
+    PUBLIC
+        FILE_SET HEADERS
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+        FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/base_types.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/bs_archive_auto.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/bs_archive.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/bs_archive_entries.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/libbsarch.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/libbsarch.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/utils/convertible_string.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/utils/convertible_ostream.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/utils/string_convert.hpp
 )
+target_include_directories(libbsarch_OOP PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/libbsarch/utils)
+target_link_libraries(libbsarch_OOP PUBLIC mo2::dds-header)
+
 set_target_properties(libbsarch_OOP PROPERTIES
     DEBUG_POSTFIX "d"
     CXX_STANDARD 17
 )
-target_include_directories(libbsarch_OOP PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dds)
 
 if (MSVC)
     target_compile_options(libbsarch_OOP PRIVATE /MP)
 endif()
 
-## Copying the corresponding DLL ##
+# adding Qt support
+if(Qt6_FOUND)
+    message("libbsarch: Qt6 found, enabling Qt support")
+    target_link_libraries(libbsarch_OOP PUBLIC Qt::Core)
+    target_compile_definitions(libbsarch PUBLIC "LIBBSARCH_QT_SUPPORT")
+    target_compile_definitions(libbsarch_OOP PUBLIC "LIBBSARCH_QT_SUPPORT")
+endif()
 
-#Finding 32 or 64bits
+# target_link_libraries(libbsarch_OOP PUBLIC libbsarch)
+
+# install
+
+# finding 32 or 64bits
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     # 64 bits
     set(lib_delphi "${CMAKE_CURRENT_SOURCE_DIR}/delphi/lib64")
@@ -78,12 +97,34 @@ elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
     message("libbsarch: using 32bits DLL")
 endif()
 
-#Adding Qt support
-if(Qt6_FOUND)
-    message("libbsarch: Qt6 found, enabling Qt support")
-    target_link_libraries(libbsarch_OOP PUBLIC Qt::Core)
-    target_compile_definitions(libbsarch PUBLIC "LIBBSARCH_QT_SUPPORT")
-    target_compile_definitions(libbsarch_OOP PUBLIC "LIBBSARCH_QT_SUPPORT")
-endif()
+install(TARGETS libbsarch libbsarch_OOP EXPORT libbsarchTargets FILE_SET HEADERS)
+install(FILES $<TARGET_PDB_FILE:libbsarch> DESTINATION pdb OPTIONAL)
+install(EXPORT libbsarchTargets
+        FILE mo2-libbsarch-targets.cmake
+        NAMESPACE mo2::
+        DESTINATION lib/cmake/mo2-libbsarch
+)
 
-target_link_libraries(libbsarch_OOP PUBLIC libbsarch)
+# install the true DLLs
+install(FILES ${lib_delphi}/libbsarch.dll DESTINATION bin CONFIGURATIONS Release RelWithDebInfo MinSizeRel)
+install(FILES ${lib_delphi}/libbsarchd.dll DESTINATION bin CONFIGURATIONS Debug)
+
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/mo2-libbsarch-config.cmake"
+  INSTALL_DESTINATION "lib/cmake/mo2-libbsarch"
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/mo2-libbsarch-config-version.cmake"
+  VERSION "0.0.13"
+  COMPATIBILITY AnyNewerVersion
+  ARCH_INDEPENDENT
+)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/mo2-libbsarch-config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/mo2-libbsarch-config-version.cmake
+  DESTINATION lib/cmake/mo2-libbsarch
+)
