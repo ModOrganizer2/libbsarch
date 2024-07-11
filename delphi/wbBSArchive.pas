@@ -2429,6 +2429,7 @@ begin
             fStream.ReadBuffer(Result.data[TexSize], Size);
 
           Inc(TexSize, Size);
+          Result.size := TexSize;
         end;
       end
 
