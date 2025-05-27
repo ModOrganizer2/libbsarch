@@ -1,4 +1,3 @@
-LIBRARY LIBBSARCH
 ;DESCRIPTION "BSArch DLL"
 EXPORTS
  bsa_entry_list_create

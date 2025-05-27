@@ -49,6 +49,7 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
+
 ### CMake Patch ###
 # External projects
 *-prefix/
@@ -530,3 +531,9 @@ healthchecksdb
 MigrationBackup/
 
 # End of https://www.gitignore.io/api/qt,c++,cmake,delphi,qtcreator,visualstudio
+
+install
+examples/build
+examples/vsbuild
+examples/test_ba1
+examples/test_ba2

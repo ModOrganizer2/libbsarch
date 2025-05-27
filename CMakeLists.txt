@@ -5,7 +5,7 @@ include(CMakePackageConfigHelpers)
 project(libbsarch CXX)
 
 find_package(mo2-dds-header CONFIG REQUIRED)
-find_package(Qt6 COMPONENTS Core REQUIRED)
+find_package(Qt6 COMPONENTS Core)
 
 get_target_property(SRCS mo2::dds-header SOURCES)
 
