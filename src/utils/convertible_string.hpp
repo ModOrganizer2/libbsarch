@@ -6,10 +6,11 @@
 
 //See https://stackoverflow.com/questions/4804298/how-to-convert-wstring-into-string
 
-#include "string_convert.hpp"
-#ifdef QT
+#ifdef LIBBSARCH_QT_SUPPORT
 #include <QString>
 #endif
+
+#include "string_convert.hpp"
 
 namespace libbsarch {
 class convertible_string
@@ -23,23 +24,20 @@ public:
     convertible_string(const char *const val_array, bool to_native_path = true);
     convertible_string(const std::wstring &wvalue, bool to_native_path = true);
     convertible_string(const wchar_t *const wval_array, bool to_native_path = true);
-#ifdef QT
-    convertible_string(const QString &qsvalue, bool to_native_path = true);
-#endif
 
     /* assignment operators */
     convertible_string &operator=(const std::string &value);
     convertible_string &operator=(const std::wstring &wvalue);
     convertible_string &operator=(const wchar_t *wvalue);
-#ifdef QT
-    convertible_string &operator=(const QString &qsvalue);
-#endif
 
     /* implicit conversion operators */
     operator std::string() const;
     operator std::wstring() const;
     operator const wchar_t *() const;
-#ifdef QT
+
+#ifdef LIBBSARCH_QT_SUPPORT
+    convertible_string(const QString &qsvalue, bool to_native_path = true);
+    convertible_string &operator=(const QString &qsvalue);
     operator QString() const;
 #endif
 

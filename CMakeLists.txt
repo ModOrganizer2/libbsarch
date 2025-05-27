@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-option(copy_dll_to_binary_dir "Will copy libbsarch DLL to the binary directory. May not work if libbsarch is used as a subproject" ON)
-
 # Project
 project(libbsarch CXX)
 
@@ -11,20 +9,17 @@ add_library(libbsarch SHARED
     src/libbsarch.cpp
     src/libbsarch.def
 )
+set_target_properties(libbsarch PROPERTIES DEBUG_POSTFIX "d")
 target_include_directories(libbsarch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dds)
 target_compile_features(libbsarch PRIVATE cxx_std_11)
 
-# Preprocessor definitions
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if(MSVC)
-        target_compile_options(libbsarch PRIVATE /W3 /MDd /Od /EHsc)
-    endif()
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    if(MSVC)
-        target_compile_options(libbsarch PRIVATE /W3 /Zi /EHsc)
-    endif()
+# preprocessor definitions
+if(MSVC)
+    target_compile_options(libbsarch PRIVATE
+        /W3 /EHsc /MP
+        $<$<CONFIG:DEBUG>:/MDd /Od>
+        $<$<CONFIG:RELEASE>:/Zi>
+    )
 endif()
 
 target_compile_definitions(libbsarch PRIVATE BSARCH_DLL_EXPORT)
@@ -60,8 +55,15 @@ add_library(libbsarch_OOP STATIC
     src/utils/string_convert.cpp
     src/utils/string_convert.hpp
 )
+set_target_properties(libbsarch_OOP PROPERTIES
+    DEBUG_POSTFIX "d"
+    CXX_STANDARD 17
+)
 target_include_directories(libbsarch_OOP PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dds)
 
+if (MSVC)
+    target_compile_options(libbsarch_OOP PRIVATE /MP)
+endif()
 
 ## Copying the corresponding DLL ##
 
@@ -76,30 +78,12 @@ elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
     message("libbsarch: using 32bits DLL")
 endif()
 
-if(copy_dll_to_binary_dir)
-    #Finding debug or release
-    if(CMAKE_BUILD_TYPE MATCHES DEBUG)
-        set(libbsarch_dll_path "${lib_delphi}/libbsarchd.dll")
-    else()
-        set(libbsarch_dll_path "${lib_delphi}/libbsarch.dll")
-    endif()
-
-    #Actually copying the DLL
-    add_custom_command(TARGET libbsarch POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${libbsarch_dll_path}
-        ${CMAKE_BINARY_DIR}/libbsarch.dll)
-    message("libbsarch: Copying the DLL to ${CMAKE_BINARY_DIR}/libbsarch.dll")
-endif()
-
 #Adding Qt support
 if(Qt6_FOUND)
     message("libbsarch: Qt6 found, enabling Qt support")
     target_link_libraries(libbsarch_OOP PUBLIC Qt::Core)
-    target_compile_definitions(libbsarch PUBLIC "QT")
-    target_compile_definitions(libbsarch_OOP PUBLIC "QT")
+    target_compile_definitions(libbsarch PUBLIC "LIBBSARCH_QT_SUPPORT")
+    target_compile_definitions(libbsarch_OOP PUBLIC "LIBBSARCH_QT_SUPPORT")
 endif()
 
 target_link_libraries(libbsarch_OOP PUBLIC libbsarch)
-target_compile_features(libbsarch_OOP PRIVATE cxx_std_17)
-target_compile_definitions(libbsarch_OOP PRIVATE _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
