@@ -134,6 +134,7 @@ ui_*.h
 *.jsc
 Makefile*
 *build-*
+vsbuild
 
 # Qt unit tests
 target_wrapper.*
