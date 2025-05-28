@@ -5,7 +5,6 @@ include(CMakePackageConfigHelpers)
 project(libbsarch CXX)
 
 find_package(mo2-dds-header CONFIG REQUIRED)
-find_package(Qt6 COMPONENTS Core)
 
 get_target_property(SRCS mo2::dds-header SOURCES)
 
@@ -72,14 +71,6 @@ set_target_properties(libbsarch_OOP PROPERTIES
 
 if (MSVC)
     target_compile_options(libbsarch_OOP PRIVATE /MP)
-endif()
-
-# adding Qt support
-if(Qt6_FOUND)
-    message("libbsarch: Qt6 found, enabling Qt support")
-    target_link_libraries(libbsarch_OOP PUBLIC Qt::Core)
-    target_compile_definitions(libbsarch PUBLIC "LIBBSARCH_QT_SUPPORT")
-    target_compile_definitions(libbsarch_OOP PUBLIC "LIBBSARCH_QT_SUPPORT")
 endif()
 
 # target_link_libraries(libbsarch_OOP PUBLIC libbsarch)

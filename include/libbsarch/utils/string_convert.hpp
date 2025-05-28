@@ -13,13 +13,6 @@
 #include <string>
 
 namespace libbsarch {
-#ifdef LIBBSARCH_QT_SUPPORT
-std::wstring to_wstring(const QString &str);
-std::string to_string(const QString &str);
-QString to_qstring(const std::string &str);
-QString to_qstring(const std::wstring &str);
-#endif
-
 std::string to_string(const std::wstring &str);
 std::wstring to_wstring(const std::string &str);
 } // namespace libbsarch

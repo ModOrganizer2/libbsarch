@@ -13,6 +13,10 @@
 #include "string_convert.hpp"
 
 namespace libbsarch {
+
+template<typename String>
+class convertible_string_converter;
+
 class convertible_string
 {
 public:
@@ -34,12 +38,6 @@ public:
     operator std::string() const;
     operator std::wstring() const;
     operator const wchar_t *() const;
-
-#ifdef LIBBSARCH_QT_SUPPORT
-    convertible_string(const QString &qsvalue, bool to_native_path = true);
-    convertible_string &operator=(const QString &qsvalue);
-    operator QString() const;
-#endif
 
     /* Util */
     bool remove_substring(const convertible_string &sub_str);

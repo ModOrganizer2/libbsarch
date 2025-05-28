@@ -100,27 +100,4 @@ convertible_string &convertible_string::to_native_path()
     return *this;
 }
 
-#ifdef LIBBSARCH_QT_SUPPORT
-convertible_string::convertible_string(const QString &qsvalue, bool to_native_path)
-    : str_(to_string(qsvalue))
-    , auto_convert_to_native_path(to_native_path)
-{
-    if (auto_convert_to_native_path)
-        this->to_native_path();
-}
-
-convertible_string &convertible_string::operator=(const QString &qsvalue)
-{
-    str_ = to_string(qsvalue);
-    if (auto_convert_to_native_path)
-        this->to_native_path();
-    return *this;
-}
-
-convertible_string::operator QString() const
-{
-    return to_qstring(str_);
-}
-#endif
-
 } // namespace libbsarch
