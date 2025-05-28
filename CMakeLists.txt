@@ -107,9 +107,15 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in
   NO_CHECK_REQUIRED_COMPONENTS_MACRO
 )
 
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/Version.cmake)
+set(LIBBSARCH_VERSION
+  ${LIBBSARCH_MAJOR_VERSION}.${LIBBSARCH_MINOR_VERSION}.${LIBBSARCH_PATCH_VERSION})
+
+
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/mo2-libbsarch-config-version.cmake"
-  VERSION "0.0.13"
+  VERSION "${LIBBSARCH_VERSION}"
   COMPATIBILITY AnyNewerVersion
   ARCH_INDEPENDENT
 )
