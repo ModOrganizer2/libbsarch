@@ -69,14 +69,12 @@ void bs_archive_auto::save_to_disk(const convertible_string &archive_path)
     {
         switch (file.data.index())
         {
-            case 0:
-            {
+            case 0: {
                 const auto &blob = std::get<memory_blob>(file.data);
                 bs_archive::add_file_from_memory(file.path_in_archive, blob);
                 break;
             }
-            case 1:
-            {
+            case 1: {
                 const auto &file_path = std::get<convertible_string>(file.data);
                 const auto &blob = disk_blob(file.path_in_archive, file_path, bool());
                 bs_archive::add_file_from_disk(blob);

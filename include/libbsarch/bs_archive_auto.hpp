@@ -8,7 +8,7 @@
 
 namespace libbsarch {
 /*!
- * \brief The bs_archive_auto class is a convenience class. It manages both bs_archive and bs_archive_entries. 
+ * \brief The bs_archive_auto class is a convenience class. It manages both bs_archive and bs_archive_entries.
  * It is recommended when packing from disk/extracting to disk
  * Otherwise, if using memory, the use of these two separate classes is recommended
  */

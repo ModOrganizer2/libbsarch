@@ -20,7 +20,7 @@ type
   TwbBSResultMessageBuffer = packed record
     buffer: TwbBSResultBuffer;
     message: TwbBSResultMessage;
-  end;  
+  end;
 
 {Shared}
 
