@@ -44,7 +44,7 @@ convertible_ostream::operator std::wostream &()
     return std::wcout;
 }
 
-#ifdef QT
+#ifdef LIBBSARCH_QT_SUPPORT
 convertible_ostream::operator QDebug()
 {
     return qDebug();

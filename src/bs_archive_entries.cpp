@@ -3,8 +3,7 @@
 namespace libbsarch {
 bs_archive_entries::bs_archive_entries()
     : _entries(bsa_entry_list_create())
-{
-}
+{}
 
 bs_archive_entries::bs_archive_entries(const std::vector<convertible_string> &entries)
     : _entries(bsa_entry_list_create())
@@ -15,8 +14,7 @@ bs_archive_entries::bs_archive_entries(const std::vector<convertible_string> &en
 
 bs_archive_entries::bs_archive_entries(const bsa_entry_list_t &entries)
     : _entries(entries)
-{
-}
+{}
 
 bs_archive_entries::~bs_archive_entries()
 {

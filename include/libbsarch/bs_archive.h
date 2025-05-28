@@ -62,17 +62,17 @@ public:
                                    void *context)
     {
         const auto &path = *static_cast<convertible_string *>(context) + '/' + convertible_string(file_path);
-    
+
         auto image = std::make_unique<DirectX::ScratchImage>();
         DirectX::TexMetadata info;
-        
+
         const auto hr = LoadFromDDSFile(PREPARE_PATH_LIBBSARCH(path), DirectX::DDS_FLAGS_BAD_DXTN_TAILS, &info, *image);
         if (FAILED(hr))
         {
             //Do not throw here. Exceptions will be ignored
             return;
         }
-        
+
         dds_info->width = info.width;
         dds_info->height = info.height;
         dds_info->mipmaps = info.mipLevels;
